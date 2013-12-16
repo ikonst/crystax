@@ -110,8 +110,14 @@ else # CRYSTAX_FORCE_REBUILD == true
 
 $(call ndk_log,Rebuilding crystax libraries from sources)
 
-CRYSTAX_C_SRC_FILES   := $(shell cd $(LOCAL_PATH) && find src -name '*.c' -print)
-CRYSTAX_CPP_SRC_FILES := $(shell cd $(LOCAL_PATH) && find src -name '*.cpp' -a -not -name 'android_jni.cpp' -print)
+# Strips the $(LOCAL_PATH) prefix from a list of (qualified) paths
+LOCAL_PATH_PREFIX_LENGTH := $(call plus,$(call strlen,$(LOCAL_PATH)),2)
+define chop-local-path
+	$(foreach file,$1,$(call substr,$(file),$(LOCAL_PATH_PREFIX_LENGTH),1024))
+endef
+
+CRYSTAX_C_SRC_FILES   := $(call chop-local-path,$(wildcard $(LOCAL_PATH)/src/**/*.c))
+CRYSTAX_CPP_SRC_FILES := $(filter-out src/crystax/android_jni.cpp,$(call chop-local-path,$(wildcard $(LOCAL_PATH)/src/**/*.cpp)))
 CRYSTAX_SRC_FILES     := $(CRYSTAX_C_SRC_FILES) $(CRYSTAX_CPP_SRC_FILES)
 
 include $(CLEAR_VARS)
